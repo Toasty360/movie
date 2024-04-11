@@ -19,10 +19,9 @@ class MediaPlayer extends StatefulWidget {
 
 class _MediaPlayerState extends State<MediaPlayer> {
   late final player = Player(
-    configuration: const PlayerConfiguration(
-      vo: 'gpu',
-    ),
-  );
+      configuration: const PlayerConfiguration(
+    vo: 'gpu',
+  ));
   late final controller = VideoController(
     player,
     configuration: const VideoControllerConfiguration(
@@ -54,9 +53,11 @@ class _MediaPlayerState extends State<MediaPlayer> {
     videosrc(url).then((data) {
       if (data["src"] != "Not found!") {
         setState(() {
-          player.open(Media(data["src"]));
+          player.open(Media(data["src"],
+              httpHeaders: {"Referer": "http://vidsrc.stream"}));
         });
       } else {
+        print("not found");
         Toast.show("Media not found");
         Navigator.pop(context);
       }

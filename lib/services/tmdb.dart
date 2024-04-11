@@ -19,11 +19,15 @@ class TMDB {
     return data;
   }
 
-  static Future<Movie> fetchInfo(int id, String type) async {
+  static Future<dynamic> fetchInfo(int id, String type) async {
     print("called info toasty-kun.vercel.app/meta/tmdb/info/$id?type=$type");
     Response v = await Dio()
-        .get("https://toasty-kun.vercel.app/meta/tmdb/info/$id?type=$type");
-    return Movie.fromJSON(v.data);
+        .get("https://toasty-kun.vercel.app/meta/tmdb/info/$id?type=$type",
+            options: Options(
+              validateStatus: (status) => true,
+            ));
+
+    return v.statusCode == 200 ? Movie.fromJSON(v.data) : "";
   }
 
   static Future<List<HomeData>> fetchSearchData(String text) async {

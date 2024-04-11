@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:movie/model/model.dart';
 import 'package:movie/services/tmdb.dart';
+import 'package:toast/toast.dart';
 
 import 'details.dart';
 
@@ -35,6 +36,7 @@ class _HomeState extends State<Home> {
   List<HomeData> trending = [];
   @override
   void initState() {
+    ToastContext().init(context);
     super.initState();
     widget.data.then((value) {
       setState(() => trending = value);

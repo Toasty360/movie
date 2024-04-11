@@ -1,19 +1,16 @@
 class Movie {
   final String id;
   final String title;
-  // final String episodeId;
   final String description;
   final String image;
   final String cover;
   final String type;
   final String rating;
   final String releaseDate;
-  final String geners;
-  // final double duration;
+  final List geners;
   final int totalEpisodes;
 
   final List<Seasons> seasons;
-
   Movie(
       this.id,
       this.title,
@@ -39,7 +36,7 @@ class Movie {
       json["type"],
       json["rating"].toString(),
       json["releaseDate"],
-      json["geners"].toString().replaceAll(RegExp(r'[]'), ""),
+      json["genres"],
       json["totalEpisodes"] ?? 1,
       json["seasons"] != null
           ? json["seasons"]

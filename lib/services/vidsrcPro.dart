@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 
-class Vidsrc {
+class VidsrcPro {
   List<Map<String, String>> _extractQualityAndLinks(String m3u8Content) {
     final lines = m3u8Content.split("\n");
     final results = <Map<String, String>>[];

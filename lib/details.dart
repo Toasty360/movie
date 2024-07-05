@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:movie/pages/media.dart';
-import 'package:movie/services/hdrezka.dart';
 import 'package:movie/services/tmdb.dart';
 import 'model/model.dart';
 
@@ -22,20 +21,20 @@ class _DetailsPageState extends State<DetailsPage> {
   bool gotError = false;
   bool isFetched = false;
   int activeSeason = 0;
-  String hdrezkaId = "";
-  String hdrezkaURL = "";
+  // String hdrezkaId = "";
+  // String hdrezkaURL = "";
   late Movie info;
 
   @override
   void initState() {
     super.initState();
-    getIds(widget.data.title, widget.data.releaseDate, widget.data.type)
-        .then((value) {
-      hdrezkaId = value["id"];
-      hdrezkaURL = value["url"];
-      print(hdrezkaId);
-      setState(() {});
-    });
+    // getIds(widget.data.title, widget.data.releaseDate, widget.data.type)
+    //     .then((value) {
+    //   hdrezkaId = value["id"];
+    //   hdrezkaURL = value["url"];
+    //   print(hdrezkaId);
+    //   setState(() {});
+    // });
     data = widget.data;
     try {
       TMDB
@@ -143,20 +142,20 @@ class _DetailsPageState extends State<DetailsPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 4, horizontal: 6),
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(4),
-                            color: const Color.fromARGB(255, 12, 14, 17)),
-                        child: Text(
-                          hdrezkaId,
-                          style: const TextStyle(color: Colors.purple),
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 20,
-                      ),
+                      // Container(
+                      //   padding: const EdgeInsets.symmetric(
+                      //       vertical: 4, horizontal: 6),
+                      //   decoration: BoxDecoration(
+                      //       borderRadius: BorderRadius.circular(4),
+                      //       color: const Color.fromARGB(255, 12, 14, 17)),
+                      //   child: Text(
+                      //     hdrezkaId,
+                      //     style: const TextStyle(color: Colors.purple),
+                      //   ),
+                      // ),
+                      // const SizedBox(
+                      //   width: 20,
+                      // ),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: 4, horizontal: 6),
@@ -349,11 +348,9 @@ class _DetailsPageState extends State<DetailsPage> {
                                                 builder: (context) =>
                                                     MediaPlayer(
                                                         episode: temp
-                                                          ..image = hdrezkaURL
-                                                          ..id = hdrezkaId)));
+                                                          ..id = data.id)));
                                       },
-                                      child:
-                                          epsCard(temp.title!, temp.image!),
+                                      child: epsCard(temp.title!, temp.image!),
                                     );
                                   },
                                 ),
@@ -371,8 +368,7 @@ class _DetailsPageState extends State<DetailsPage> {
                                       builder: (context) => MediaPlayer(
                                           episode: Episode(
                                               type: "movie",
-                                              image: hdrezkaURL,
-                                              id: hdrezkaId,
+                                              id: widget.data.id,
                                               title: data.title))));
                             },
                             child: Container(

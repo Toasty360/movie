@@ -66,7 +66,7 @@ class Seasons {
 }
 
 class Episode {
-  String id;
+  int id;
   String type;
   String? title;
   int? episode;
@@ -89,7 +89,7 @@ class Episode {
 
   static Episode fromJSON(dynamic json) {
     return Episode(
-      id: json["episode_number"].toString(),
+      id: json["episode_number"],
       type: "tv",
       title: json["name"],
       episode: json["episode_number"],

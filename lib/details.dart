@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:movie/pages/media.dart';
+import 'package:movie/services/hdrezka.dart';
 import 'package:movie/services/tmdb.dart';
 import 'model/model.dart';
 
@@ -21,15 +22,25 @@ class _DetailsPageState extends State<DetailsPage> {
   bool gotError = false;
   bool isFetched = false;
   int activeSeason = 0;
-
+  String hdrezkaId = "";
+  String hdrezkaURL = "";
   late Movie info;
 
   @override
   void initState() {
     super.initState();
+    getIds(widget.data.title, widget.data.releaseDate, widget.data.type)
+        .then((value) {
+      hdrezkaId = value["id"];
+      hdrezkaURL = value["url"];
+      print(hdrezkaId);
+      setState(() {});
+    });
     data = widget.data;
     try {
-      TMDB.fetchInfo(data.id, data.type).then((value) {
+      TMDB
+          .fetchMovieDetails(data.id, data.type.toLowerCase() == "tv")
+          .then((value) {
         if (value != "") {
           info = value;
           isFetched = true;
@@ -71,11 +82,11 @@ class _DetailsPageState extends State<DetailsPage> {
                         decoration: BoxDecoration(
                             image: DecorationImage(
                                 image: NetworkImage(isFetched
-                                    ? info.cover.contains("originalnull") ||
-                                            info.cover
+                                    ? info.cover!.contains("originalnull") ||
+                                            info.cover!
                                                 .contains("originalundefined")
                                         ? data.image
-                                        : info.cover
+                                        : info.cover!
                                     : data.image),
                                 fit: BoxFit.cover)),
                       ),
@@ -139,6 +150,20 @@ class _DetailsPageState extends State<DetailsPage> {
                             borderRadius: BorderRadius.circular(4),
                             color: const Color.fromARGB(255, 12, 14, 17)),
                         child: Text(
+                          hdrezkaId,
+                          style: const TextStyle(color: Colors.purple),
+                        ),
+                      ),
+                      const SizedBox(
+                        width: 20,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 6),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            color: const Color.fromARGB(255, 12, 14, 17)),
+                        child: Text(
                           data.type.toUpperCase(),
                           style: const TextStyle(color: Colors.white54),
                         ),
@@ -160,6 +185,7 @@ class _DetailsPageState extends State<DetailsPage> {
                     ],
                   ),
                 ),
+
                 isFetched
                     ? Container(
                         alignment: Alignment.center,
@@ -167,7 +193,24 @@ class _DetailsPageState extends State<DetailsPage> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 20, vertical: 5),
                         child: Text(
-                          info.geners.join(", "),
+                          info.releaseDate ?? "No ETA",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white54),
+                        ),
+                      )
+                    : const Center(),
+                isFetched
+                    ? Container(
+                        alignment: Alignment.center,
+                        margin: const EdgeInsets.only(top: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 5),
+                        child: Text(
+                          info.geners.runtimeType != Null
+                              ? info.geners!.join(", ")
+                              : "Nil",
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                               fontWeight: FontWeight.bold,
@@ -194,7 +237,7 @@ class _DetailsPageState extends State<DetailsPage> {
                       data.description != ""
                           ? data.description
                           : isFetched
-                              ? info.description
+                              ? info.description!
                               : "",
                       softWrap: true,
                       textAlign: TextAlign.justify),
@@ -223,8 +266,8 @@ class _DetailsPageState extends State<DetailsPage> {
                             physics: const ClampingScrollPhysics(),
                             scrollDirection: Axis.vertical,
                             children: [
-                              info.seasons.length > 1
-                                  ? Container(
+                              info.seasons!.length > 1
+                                  ? SizedBox(
                                       height: 100,
                                       child: ListView.builder(
                                         shrinkWrap: true,
@@ -232,7 +275,7 @@ class _DetailsPageState extends State<DetailsPage> {
                                             const EdgeInsets.only(left: 20),
                                         physics: const ClampingScrollPhysics(),
                                         scrollDirection: Axis.horizontal,
-                                        itemCount: info.seasons.length,
+                                        itemCount: info.seasons!.length,
                                         itemBuilder: (context, index) {
                                           return GestureDetector(
                                             onTap: () {
@@ -250,8 +293,8 @@ class _DetailsPageState extends State<DetailsPage> {
                                                       BorderRadius.circular(8),
                                                   image: DecorationImage(
                                                       image: NetworkImage(info
-                                                          .seasons[index]
-                                                          .cover),
+                                                          .seasons![index]
+                                                          .image!),
                                                       fit: BoxFit.cover)),
                                               child: Container(
                                                   padding: const EdgeInsets
@@ -259,7 +302,7 @@ class _DetailsPageState extends State<DetailsPage> {
                                                       horizontal: 10,
                                                       vertical: 5),
                                                   child: Text(
-                                                    "S${info.seasons[index].season}",
+                                                    "S${info.seasons![index].season}",
                                                     style: const TextStyle(
                                                         fontWeight:
                                                             FontWeight.bold,
@@ -294,10 +337,10 @@ class _DetailsPageState extends State<DetailsPage> {
                                   physics: const ClampingScrollPhysics(),
                                   shrinkWrap: true,
                                   itemCount: info
-                                      .seasons[activeSeason].episodes.length,
+                                      .seasons![activeSeason].episodes?.length,
                                   itemBuilder: (context, index) {
-                                    Episode _temp = info
-                                        .seasons[activeSeason].episodes[index];
+                                    Episode temp = info.seasons![activeSeason]
+                                        .episodes![index];
                                     return GestureDetector(
                                       onTap: () {
                                         Navigator.push(
@@ -305,12 +348,12 @@ class _DetailsPageState extends State<DetailsPage> {
                                             MaterialPageRoute(
                                                 builder: (context) =>
                                                     MediaPlayer(
-                                                        episode: _temp
-                                                          ..id = data.id
-                                                              .toString())));
+                                                        episode: temp
+                                                          ..image = hdrezkaURL
+                                                          ..id = hdrezkaId)));
                                       },
                                       child:
-                                          epsCard(_temp.title!, _temp.cover!),
+                                          epsCard(temp.title!, temp.image!),
                                     );
                                   },
                                 ),
@@ -319,12 +362,17 @@ class _DetailsPageState extends State<DetailsPage> {
                           )
                         : InkWell(
                             onTap: () {
+                              // fetchByBruteForce(hdrezkaURL).then((value) {
+                              //   print(value);
+                              // });
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) => MediaPlayer(
                                           episode: Episode(
-                                              id: data.id.toString(),
+                                              type: "movie",
+                                              image: hdrezkaURL,
+                                              id: hdrezkaId,
                                               title: data.title))));
                             },
                             child: Container(
@@ -345,7 +393,7 @@ class _DetailsPageState extends State<DetailsPage> {
                             ),
                           )
                     : Container(
-                        margin: const EdgeInsets.only(top: 10),
+                        margin: const EdgeInsets.only(top: 30),
                         alignment: Alignment.center,
                         child: gotError
                             ? const Center(

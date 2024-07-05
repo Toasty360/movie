@@ -1,75 +1,73 @@
 class Movie {
   final String id;
-  final String title;
-  final String description;
-  final String image;
-  final String cover;
-  final String type;
-  final String rating;
-  final String releaseDate;
-  final List geners;
-  final int totalEpisodes;
-
-  final List<Seasons> seasons;
+  String? title;
+  String? description;
+  String? image;
+  String? cover;
+  String? type;
+  String? rating;
+  String? releaseDate;
+  List? geners;
+  int? totalEpisodes;
+  int? totalSeasons;
+  List<Seasons>? seasons;
   Movie(
-      this.id,
-      this.title,
-      // this.episodeId,
-      this.description,
-      this.image,
-      this.cover,
-      this.type,
-      this.rating,
-      this.releaseDate,
-      this.geners,
-      this.totalEpisodes,
-      // this.duration,
-      this.seasons);
+    this.id,
+  );
 
   static Movie fromJSON(dynamic json) {
-    return Movie(
-      json["id"],
-      json["title"],
-      json["description"],
-      json["image"],
-      json["cover"],
-      json["type"],
-      json["rating"].toString(),
-      json["releaseDate"],
-      json["genres"],
-      json["totalEpisodes"] ?? 1,
-      json["seasons"] != null
+    return Movie(json["id"])
+      ..title = json["title"]
+      ..description = json["description"]
+      ..image = json["image"]
+      ..cover = json["cover"]
+      ..type = json["type"]
+      ..rating = json["rating"].toString()
+      ..releaseDate = json["releaseDate"]
+      ..geners = json["geners"]
+      ..totalEpisodes = json["totalEpisodes"]
+      ..seasons = json["seasons"] != null
           ? json["seasons"]
               .map((e) => Seasons.fromJSON(e))
               .toList()
               .cast<Seasons>()
-          : [],
-    );
+          : [];
+  }
+
+  @override
+  String toString() {
+    return 'Movie{tmdbID: $id, releaseDate: $releaseDate, title: $title, description: $description, image: $image, cover: $cover, totalSeasons: $totalSeasons, genres: $geners, seasons: $seasons}';
   }
 }
 
 class Seasons {
   final int season;
-  final String image;
-  final String cover;
-  final List<Episode> episodes;
+  String? image;
+  List<Episode>? episodes;
 
-  Seasons(this.season, this.image, this.cover, this.episodes);
+  Seasons(this.season, this.image);
 
   static Seasons fromJSON(dynamic json) {
     return Seasons(
-        json["season"],
-        json["image"]["mobile"],
-        json["image"]["hd"],
-        json["episodes"]
-            .map((e) => Episode.fromJSON(e))
-            .toList()
-            .cast<Episode>());
+      json["season"],
+      json["image"].runtimeType != Null
+          ? json["image"]["mobile"]
+          : json["img"]["mobile"],
+    )..episodes = json["episodes"]
+        .map((e) => Episode.fromJSON(e))
+        .toList()
+        .cast<Episode>();
+  }
+
+  @override
+  String toString() {
+    return 'Season{seasonNumber: $season, posterPath: $image, episodes: $episodes}';
   }
 }
 
 class Episode {
   String id;
+  String type;
   String? title;
   int? episode;
   int? season;
@@ -81,6 +79,7 @@ class Episode {
   Episode(
       {required this.id,
       this.title,
+      required this.type,
       this.episode,
       this.season,
       this.releaseDate,
@@ -90,15 +89,22 @@ class Episode {
 
   static Episode fromJSON(dynamic json) {
     return Episode(
-      id: json["id"] ?? "",
-      title: json["title"],
-      episode: json["episode"],
-      season: json["season"],
-      releaseDate: json["releaseDate"] ?? "",
-      description: json["description"],
-      image: json["img"] != null ? json["img"]["mobile"] : "",
-      cover: json["img"] != null ? json["img"]["hd"] : "",
+      id: json["episode_number"].toString(),
+      type: "tv",
+      title: json["name"],
+      episode: json["episode_number"],
+      season: json["season_number"],
+      releaseDate: json["air_date"] ?? "",
+      description: json["overview"],
+      image: json["still_path"].runtimeType != Null
+          ? "https://media.themoviedb.org/t/p/w454_and_h254_bestv2/${json["still_path"]}"
+          : "https://picsum.photos/seed/picsum/200/300",
     );
+  }
+
+  @override
+  String toString() {
+    return 'id: $id, Episodenumber: $episode title: $title description: $description image: $image';
   }
 }
 
@@ -131,12 +137,18 @@ class HomeData {
     // print(json);
     return HomeData(
         json["id"],
-        json["original_title"] ?? json["title"] ?? json["name"],
+        json["title"] ?? json["original_title"] ?? json["name"],
         json["media_type"],
         json["overview"],
         "https://www.themoviedb.org/t/p/original/${json["poster_path"]}",
         "https://www.themoviedb.org/t/p/original/${json["backdrop_path"]}",
         json["popularity"].toString(),
-        json["release_date"] ?? "");
+        // json["release_date"] ?? json["first_air_date"] ?? ""
+        (RegExp(r'^(\d{4})')
+                    .firstMatch(
+                        json["release_date"] ?? json["first_air_date"] ?? "")
+                    ?.group(1) ??
+                'No match')
+            .trim());
   }
 }

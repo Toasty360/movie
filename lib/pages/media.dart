@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:movie/services/extractor.dart';
+import 'package:movie/services/hdrezka.dart';
 import 'package:toast/toast.dart';
 
 import '../model/model.dart';
@@ -35,14 +36,41 @@ class _MediaPlayerState extends State<MediaPlayer> {
 
   @override
   void initState() {
-    readym3u8();
-
+    callRezka();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
     super.initState();
+  }
+
+  callRezka() async {
+    print(widget.episode.id);
+    widget.episode.id == ""
+        ? fetchByBruteForce(widget.episode.image!).then((value) {
+            print(value);
+            // player.open(Media(
+            //     data["Sources"]["720p"] ?? data["Sources"]["480p"],
+            //     httpHeaders: {"Referer": "https://hdrezka.me/"}));
+          })
+        : hdrezka(widget.episode).then((data) => setState(() {
+              if (data.isNotEmpty) {
+                setState(() {
+                  quality = data;
+                });
+                player.open(Media(
+                    data["Sources"]["720p"] ?? data["Sources"]["480p"],
+                    httpHeaders: {"Referer": "https://hdrezka.me/"}));
+              } else {
+                fetchByBruteForce(widget.episode.image!).then((value) {
+                  print(value.keys);
+                  player.open(Media(value["720p"] ?? value["480p"],
+                      httpHeaders: {"Referer": "https://hdrezka.me/"}));
+                });
+                Toast.show("fetching brute force");
+              }
+            }));
   }
 
   readym3u8() async {
@@ -95,6 +123,31 @@ class _MediaPlayerState extends State<MediaPlayer> {
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 16)),
+            const Spacer(),
+            PopupMenuButton(
+                icon: const Icon(Icons.bar_chart_rounded),
+                tooltip: "Quality",
+                itemBuilder: (context) => quality["Sources"]
+                    .keys
+                    .toList()
+                    .map((e) => PopupMenuItem(
+                          child: Text(e),
+                          onTap: () {
+                            var pos = player.state.position;
+                            Toast.show(e);
+                            player
+                                .open(Media(quality["Sources"][e]))
+                                .then((value) {
+                              player.state.copyWith(position: pos);
+                              Future.delayed(const Duration(seconds: 1))
+                                  .then((value) {
+                                player.seek(pos);
+                              });
+                            });
+                          },
+                        ))
+                    .toList()
+                    .cast<PopupMenuItem>()),
           ],
           bottomButtonBar: [
             const Spacer(),

@@ -2,16 +2,22 @@ import 'dart:math';
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:movie/model/model.dart';
+import 'package:movie/pages/profile.dart';
 import 'package:movie/services/tmdb.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:toast/toast.dart';
 
 import 'details.dart';
 
-void main() {
+void main() async {
   Future<List<HomeData>> trending = TMDB.fetchTopRated();
+  WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+  await MySettings.initiateHive();
+
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Moviemate',
@@ -22,6 +28,18 @@ void main() {
     ),
     home: Home(data: trending),
   ));
+}
+
+class MySettings {
+  static late Box<String> _settings;
+
+  static Future<void> initiateHive() async {
+    final appDocumentDirectory = await getApplicationDocumentsDirectory();
+    _settings =
+        await Hive.openBox<String>("settings", path: appDocumentDirectory.path);
+  }
+
+  static Box<String> get box => _settings;
 }
 
 class Home extends StatefulWidget {
@@ -60,6 +78,24 @@ class _HomeState extends State<Home> {
                   physics: const ClampingScrollPhysics(),
                   children: trending.isNotEmpty
                       ? [
+                          Container(
+                            margin: const EdgeInsets.only(left: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.person),
+                                  onPressed: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const Profile()));
+                                  },
+                                )
+                              ],
+                            ),
+                          ),
                           Container(
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 20, vertical: 25),
@@ -102,6 +138,10 @@ mysnack(Future<List<HomeData>> fuData, BuildContext context) {
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           List<HomeData> data = snapshot.data!;
+          if (data.isEmpty) {
+            Toast.show("No data found", duration: Toast.lengthShort);
+            Navigator.pop(context);
+          }
           return ListView.builder(
               shrinkWrap: true,
               itemCount: data.length,
@@ -115,7 +155,7 @@ mysnack(Future<List<HomeData>> fuData, BuildContext context) {
                       width: screen.width,
                       margin: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 5),
-                      height: 180,
+                      height: 210,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           color: const Color.fromARGB(225, 31, 33, 35)),
@@ -125,7 +165,7 @@ mysnack(Future<List<HomeData>> fuData, BuildContext context) {
                         children: [
                           Container(
                             alignment: Alignment.center,
-                            height: 150,
+                            height: 200,
                             width: 120,
                             decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
@@ -163,15 +203,16 @@ mysnack(Future<List<HomeData>> fuData, BuildContext context) {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 5),
                                     decoration: BoxDecoration(
-                                        color: const Color.fromARGB(
-                                            255, 212, 212, 216),
-                                        borderRadius:
-                                            BorderRadius.circular(12)),
+                                        color: Colors.white.withOpacity(0.1),
+                                        border: Border.all(
+                                            color:
+                                                Colors.white.withOpacity(0.1)),
+                                        borderRadius: BorderRadius.circular(8)),
                                     child: Text(
                                       data[index].releaseDate,
                                       textAlign: TextAlign.center,
                                       style:
-                                          const TextStyle(color: Colors.black),
+                                          const TextStyle(color: Colors.white),
                                     ),
                                   )
                                 ]),

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../model/model.dart';
 
 class TMDB {
+  static Map<int, Movie> bucket = {};
   static var apiDio = Dio(BaseOptions(headers: {
     "accept": "application/json",
     "Authorization":
@@ -13,7 +14,11 @@ class TMDB {
     Response v =
         await apiDio.get("https://api.themoviedb.org/3/trending/all/day");
     for (Map e in v.data["results"]) {
-      data.add(HomeData.fromJson(e));
+      try {
+        data.add(HomeData.fromJson(e));
+      } catch (error) {
+        print("$error at ${e["title"]}");
+      }
     }
     return data;
   }
@@ -21,7 +26,7 @@ class TMDB {
   static Future<dynamic> fetchInfo(int id, String type) async {
     print("called info toasty-kun.vercel.app/meta/tmdb/info/$id?type=$type");
     Response v = await Dio()
-        .get("https://toasty-kun.vercel.app/meta/tmdb/info/$id?type=$type",
+        .get("https://valley-api.vercel.app/meta/tmdb/info/$id?type=$type",
             options: Options(
               validateStatus: (status) => true,
             ));
@@ -31,18 +36,28 @@ class TMDB {
 
   static Future<List<HomeData>> fetchSearchData(String text) async {
     Response v =
-        await Dio().get("https://toasty-kun.vercel.app/meta/tmdb/$text");
+        await Dio().get("https://valley-api.vercel.app/meta/tmdb/$text");
     List<HomeData> data = [];
     for (Map e in v.data["results"]) {
-      if (!(e["image"].toString().endsWith("null") ||
-          e["image"].toString().endsWith("undefined"))) {
-        data.add(HomeData.fromConsumet(e));
+      try {
+        if (!(e["image"].toString().endsWith("null") ||
+            e["image"].toString().endsWith("undefined"))) {
+          data.add(HomeData.fromConsumet(e));
+        }
+      } catch (error) {
+        print(error);
       }
     }
     return data;
   }
 
   static Future<Movie> fetchMovieDetails(int tmdbID, bool isTv) async {
+    if (bucket.containsKey(tmdbID)) {
+      print("in Bucket $tmdbID");
+      return Future.delayed(Duration.zero).then((value) => bucket[tmdbID]!);
+    }
+    print("not in Bucket $tmdbID");
+
     final response = await apiDio.get(
         "https://api.themoviedb.org/3/${isTv ? "tv" : "movie"}/$tmdbID?language=en-US");
     final data = response.data;
@@ -58,13 +73,15 @@ class TMDB {
           ? "https://media.themoviedb.org/t/p/w1066_and_h600_bestv2${data["backdrop_path"]}"
           : "https://picsum.photos/seed/picsum/200/300";
     if (isTv) {
+      print("istv");
       item
         ..totalSeasons = data["number_of_seasons"]
         ..geners =
             (data["genres"] as List).map((e) => e["name"] as String).toList()
         ..seasons = (data["seasons"] as List)
             .map((e) {
-              if (e["name"].contains("Season")) {
+              if (e["name"].contains("Season") ||
+                  e["name"].contains("Series")) {
                 return Seasons(
                   e["season_number"],
                   e["poster_path"].runtimeType != Null
@@ -93,6 +110,7 @@ class TMDB {
         return item.seasons![index++];
       }).toList();
     }
+    bucket[tmdbID] = item;
     print(item.geners);
     return item;
   }

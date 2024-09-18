@@ -133,7 +133,7 @@ class HomeData {
         json["releaseDate"]);
   }
 
-  static HomeData fromJson(json) {
+  static HomeData fromJson(Map json) {
     // print(json);
     return HomeData(
         json["id"],
@@ -151,4 +151,38 @@ class HomeData {
                 'No match')
             .trim());
   }
+}
+
+class MediaData {
+  final String src;
+  List<Quality> qualities;
+  final String referer;
+  List subtitles;
+  SrcProvider provider;
+
+  MediaData(
+      {required this.src,
+      required this.qualities,
+      required this.referer,
+      required this.subtitles,
+      required this.provider});
+}
+
+class Quality {
+  final String resolution;
+  final String url;
+
+  Quality({required this.resolution, required this.url});
+
+  @override
+  String toString() {
+    return 'Resolution: $resolution, URL: $url';
+  }
+}
+
+enum SrcProvider {
+  VidsrcPro,
+  VidsrcNet,
+  VidLink,
+  none;
 }

@@ -29,71 +29,73 @@ class _ProfileState extends State<Profile> {
         ),
         onPressed: () => Navigator.pop(context),
       ),
-      body: ListView(
+      body: Padding(
         padding: EdgeInsets.only(top: screen.height * 0.1),
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: const Text(
-              "Settings",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: const Text(
+                "Settings",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+              ),
             ),
-          ),
-          const SizedBox(
-            height: 30,
-          ),
-          Container(
-              padding: const EdgeInsets.only(left: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Providers",
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
-                        color: Colors.blueGrey),
-                  ),
-                  TextButton(
-                      onPressed: () {
-                        settings.putAll({
-                          'alpha': 'https://vidsrc.pro',
-                          'beta': 'https://vidsrc.net',
-                          'vidlink': 'https://hugo.vidlink.pro',
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 3),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(3),
-                          color: Colors.white.withOpacity(0.1),
-                        ),
-                        child: const Text(
-                          "Reset",
-                          style: TextStyle(fontSize: 10),
-                        ),
-                      ))
-                ],
-              )),
-          ValueListenableBuilder<Box<String>>(
-            valueListenable:
-                settings.listenable(keys: ["alpha", "beta", "vidlink"]),
-            builder: (context, value, _) {
-              return ListView(
-                padding: EdgeInsets.zero,
-                physics: const ClampingScrollPhysics(),
-                shrinkWrap: true,
-                children: [
-                  myListTile("alpha", "Alpha", value),
-                  myListTile("beta", "Beta", value),
-                  myListTile("vidlink", "Gamma", value),
-                ],
-              );
-            },
-          )
-        ],
+            const SizedBox(
+              height: 10,
+            ),
+            Container(
+                padding: const EdgeInsets.only(left: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "Providers",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                          color: Colors.blueGrey),
+                    ),
+                    TextButton(
+                        onPressed: () {
+                          settings.putAll({
+                            'alpha': 'https://vidsrc.pro',
+                            'beta': 'https://vidsrc.net',
+                            'vidlink': 'https://hugo.vidlink.pro',
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 5, vertical: 3),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(3),
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                          child: const Text(
+                            "Reset",
+                            style: TextStyle(fontSize: 10),
+                          ),
+                        )),
+                  ],
+                )),
+            ValueListenableBuilder<Box<String>>(
+              valueListenable:
+                  settings.listenable(keys: ["alpha", "beta", "vidlink"]),
+              builder: (context, value, _) {
+                return ListView(
+                  padding: EdgeInsets.zero,
+                  physics: const ClampingScrollPhysics(),
+                  shrinkWrap: true,
+                  children: [
+                    myListTile("alpha", "Alpha", value),
+                    myListTile("beta", "Beta", value),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

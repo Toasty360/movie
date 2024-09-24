@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:movie/pages/media.dart';
 import 'package:movie/services/tmdb.dart';
+import 'package:movie/test.dart';
 import 'model/model.dart';
 
 class DetailsPage extends StatefulWidget {
@@ -23,20 +24,11 @@ class _DetailsPageState extends State<DetailsPage> {
   bool gotError = false;
   bool isFetched = false;
   int activeSeason = 0;
-  // String hdrezkaId = "";
-  // String hdrezkaURL = "";
   late Movie info;
 
   @override
   void initState() {
     super.initState();
-    // getIds(widget.data.title, widget.data.releaseDate, widget.data.type)
-    //     .then((value) {
-    //   hdrezkaId = value["id"];
-    //   hdrezkaURL = value["url"];
-    //   print(hdrezkaId);
-    //   setState(() {});
-    // });
     data = widget.data;
     try {
       TMDB
@@ -341,6 +333,14 @@ class _DetailsPageState extends State<DetailsPage> {
                                           ),
                                         )
                                       : const Center(),
+                                  // TextButton(
+                                  //     onPressed: () => Navigator.push(
+                                  //         context,
+                                  //         MaterialPageRoute(
+                                  //           builder: (context) =>
+                                  //               ProviderPage(),
+                                  //         )),
+                                  //     child: Text("Test")),
                                   Container(
                                     margin: const EdgeInsets.only(top: 10),
                                     padding: const EdgeInsets.symmetric(
@@ -359,6 +359,7 @@ class _DetailsPageState extends State<DetailsPage> {
                                       gridDelegate:
                                           SliverGridDelegateWithFixedCrossAxisCount(
                                               mainAxisExtent: 100,
+                                              crossAxisSpacing: 10,
                                               crossAxisCount:
                                                   max(1, screen.width ~/ 200)),
                                       padding: const EdgeInsets.symmetric(
@@ -366,7 +367,7 @@ class _DetailsPageState extends State<DetailsPage> {
                                       scrollDirection: Axis.vertical,
                                       physics: const ClampingScrollPhysics(),
                                       shrinkWrap: true,
-                                      itemCount: info.seasons![activeSeason]
+                                      itemCount: info.seasons?[activeSeason]
                                           .episodes?.length,
                                       itemBuilder: (context, index) {
                                         Episode temp = info
@@ -384,10 +385,10 @@ class _DetailsPageState extends State<DetailsPage> {
                                           },
                                           child: Container(
                                             margin: const EdgeInsets.only(
-                                                right: 10, bottom: 10),
-                                            alignment: Alignment.bottomCenter,
-                                            padding: const EdgeInsets.only(
                                                 bottom: 10),
+                                            alignment: Alignment.bottomCenter,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 10, horizontal: 20),
                                             decoration: BoxDecoration(
                                                 borderRadius:
                                                     BorderRadius.circular(8),
@@ -398,12 +399,12 @@ class _DetailsPageState extends State<DetailsPage> {
                                                   opacity: 0.8,
                                                 )),
                                             child: Text(temp.title!,
-                                                maxLines: 3,
+                                                maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
                                                 textAlign: TextAlign.center,
                                                 style: const TextStyle(
                                                     color: Colors.white70,
-                                                    fontSize: 12)),
+                                                    fontSize: 14)),
                                           ),
                                         );
                                       },

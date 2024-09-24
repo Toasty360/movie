@@ -73,23 +73,18 @@ class TMDB {
           ? "https://media.themoviedb.org/t/p/w1066_and_h600_bestv2${data["backdrop_path"]}"
           : "https://picsum.photos/seed/picsum/200/300";
     if (isTv) {
-      print("istv");
       item
         ..totalSeasons = data["number_of_seasons"]
         ..geners =
             (data["genres"] as List).map((e) => e["name"] as String).toList()
-        ..seasons = (data["seasons"] as List)
+        ..seasons = data["seasons"]
             .map((e) {
-              if (e["name"].contains("Season") ||
-                  e["name"].contains("Series")) {
-                return Seasons(
-                  e["season_number"],
-                  e["poster_path"].runtimeType != Null
-                      ? "https://media.themoviedb.org/t/p/w260_and_h390_bestv2${e["poster_path"]}"
-                      : "https://picsum.photos/seed/picsum/200/300",
-                );
+              if ((!e["name"].contains("Specials")) &&
+                  e["poster_path"] != null) {
+                return Seasons(e["season_number"],
+                    "https://media.themoviedb.org/t/p/w260_and_h390_bestv2${e["poster_path"]}")
+                  ..episodes = [];
               }
-              return null;
             })
             .whereType<Seasons>()
             .toList();
@@ -101,15 +96,26 @@ class TMDB {
             "https://api.themoviedb.org/3/tv/$tmdbID/season/${i + 1}?language=en-US"),
       );
       final seasonResponses = await Future.wait(seasonRequests);
-
-      int index = 0;
-      item.seasons = seasonResponses.map((res) {
-        item.seasons![index].episodes = (res.data['episodes'] as List)
-            .map((e) => Episode.fromJSON(e))
-            .toList();
-        return item.seasons![index++];
-      }).toList();
+      for (var i = 0; i < seasonResponses.length; i++) {
+        for (var e in (seasonResponses[i].data['episodes'] as List)) {
+          if (e["still_path"] != null) {
+            item.seasons![i].episodes!.add(Episode.fromJSON(e));
+          }
+        }
+      }
+      // for (var res in seasonResponses) {
+      //   print(res.data['episodes'].length);
+      //   try {
+      //     item.seasons![index].episodes = (res.data['episodes'] as List)
+      //         .map((e) => Episode.fromJSON(e))
+      //         .toList();
+      //     index++;
+      //   } catch (e) {
+      //     print(e);
+      //   }
+      // }
     }
+    print(item.seasons?.length);
     bucket[tmdbID] = item;
     print(item.geners);
     return item;

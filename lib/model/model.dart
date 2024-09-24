@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 class Movie {
   final String id;
   String? title;
@@ -96,9 +98,8 @@ class Episode {
       season: json["season_number"],
       releaseDate: json["air_date"] ?? "",
       description: json["overview"],
-      image: json["still_path"].runtimeType != Null
-          ? "https://media.themoviedb.org/t/p/w454_and_h254_bestv2/${json["still_path"]}"
-          : "https://picsum.photos/seed/picsum/200/300",
+      image:
+          "https://media.themoviedb.org/t/p/w454_and_h254_bestv2/${json["still_path"]}",
     );
   }
 

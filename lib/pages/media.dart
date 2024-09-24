@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +34,11 @@ class _MediaPlayerState extends State<MediaPlayer> {
         androidAttachSurfaceAfterVideoParameters: false,
         enableHardwareAcceleration: true),
   );
-
+  final List<ServiceProvider> providers = [
+    VidsrcPro(),
+    VidsrcNet(),
+    VidLink(),
+  ];
   String currentQuality = "";
   String currentCaption = "";
   double playbackSpeed = 1;
@@ -45,7 +51,9 @@ class _MediaPlayerState extends State<MediaPlayer> {
 
   @override
   void initState() {
-    _setSource();
+    _setSource().then((value) {
+      setState(() {});
+    });
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -54,130 +62,52 @@ class _MediaPlayerState extends State<MediaPlayer> {
     super.initState();
   }
 
-  _setSource() async {
-    final List<ServiceProvider> providers = [
-      VidsrcPro(),
-      VidsrcNet(),
-      VidLink(),
-    ];
+  Future<void> _setSource({ServiceProvider? selectedProvider}) async {
+    List<ServiceProvider> providersToUse =
+        selectedProvider != null ? [selectedProvider] : providers;
 
-    for (var provider in providers) {
-      if (mounted) {
-        try {
-          if (widget.episode.season == null) {
-            data = await provider.getSource(widget.episode.id, true);
-          } else {
-            data = await provider.getSource(widget.episode.id, false,
+    for (ServiceProvider provider in providersToUse) {
+      if (!mounted) break;
+      try {
+        data = widget.episode.season == null
+            ? await provider.getSource(widget.episode.id, true)
+            : await provider.getSource(widget.episode.id, false,
                 season: widget.episode.season, episode: widget.episode.episode);
+
+        if (!mounted) break;
+        print(data.provider.name);
+        print(data.subtitles.first);
+        player
+            .open(
+              Media(data.src, httpHeaders: {"Referer": data.referer}),
+              play: true,
+            )
+            .then((value) => setState(() {}));
+
+        if (data.qualities.isEmpty) {
+          try {
+            final response = await Dio().get(data.src,
+                options: Options(headers: {"Referer": data.referer}));
+            extractQualityAndLinks(response.data);
+          } catch (e) {
+            print("Failed to extract quality and links: $e");
           }
-          if (mounted) {
-            setState(() {
-              player.open(
-                  Media(data.src, httpHeaders: {"Referer": data.referer}),
-                  play: true);
-              //     .onError((error, stackTrace) {
-              //   print("Error at 74: $error");
-              // }).catchError((error) => {print("Error at 75: $error")});
-            });
-            try {
-              if (data.qualities.isEmpty) {
-                Dio()
-                    .get(data.src,
-                        options: Options(headers: {"Referer": data.referer}))
-                    .then((value) => extractQualityAndLinks(value.data));
-                return;
-              }
-            } catch (e) {
-              print(e);
-            }
-          }
-          return;
-        } catch (e) {
-          Toast.show("${provider.runtimeType} faild to extract");
-          print("Error: $e, trying next source...");
         }
-      } else {
+
+        // Break out of the loop after a successful source is set
         break;
+      } catch (e) {
+        Toast.show("${provider.runtimeType} failed to extract");
+        print("Error: $e, trying next source...");
       }
     }
+
+    // Check if no source was found
+    if (data.src.isEmpty) {
+      Toast.show("No sources available");
+      _close();
+    }
   }
-
-  // fetchM3u8FromProSRC() async {
-  //   print("fetchM3u8FromProSRC");
-  //   try {
-  //     if (kDebugMode) {
-  //       print(
-  //           "${widget.episode.id},season: ${widget.episode.season}, episode: ${widget.episode.episode}");
-  //     }
-  //     if (widget.episode.season.runtimeType == Null) {
-  //       data = await VidsrcPro().getSource(widget.episode.id, true);
-  //     } else {
-  //       data = await VidsrcPro().getSource(widget.episode.id, false,
-  //           season: widget.episode.season, episode: widget.episode.episode);
-  //     }
-  //     if (mounted) {
-  //       if (data.qualities.isEmpty) {
-  //         Dio()
-  //             .get(data.src)
-  //             .then((value) => extractQualityAndLinks(value.data));
-  //         return;
-  //       }
-  //       setState(() {
-  //         player.open(Media(data.src));
-  //       });
-  //     }
-  //     Dio()
-  //         .get(
-  //       data.src,
-  //       options: Options(
-  //         headers: {
-  //           'Referer': 'https://vidsrc.pro/',
-  //           'User-Agent':
-  //               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-  //         },
-  //       ),
-  //     )
-  //         .then((value) {
-  //       setState(() {
-  //         data.qualities = extractQualityAndLinks(value.data);
-  //         // quality = data.qualities;
-  //       });
-  //     });
-  //   } catch (e) {
-  //     print("got error $e");
-  //     fetchM3u8FromXYZSRC();
-  //   }
-  // }
-
-  // fetchM3u8FromXYZSRC() async {
-  //   print("fetchM3u8FromSrcNet");
-  //   try {
-  //     if (widget.episode.season.runtimeType == Null) {
-  //       data = await VidsrcNet().getSource(widget.episode.id, true);
-  //     } else {
-  //       data = await VidsrcNet().getSource(widget.episode.id, false,
-  //           season: widget.episode.season, episode: widget.episode.episode);
-  //     }
-  //     if (data.src.runtimeType != Null) {
-  //       setState(() {
-  //         player.open(Media(data.src, httpHeaders: {"Referer": data.referer}));
-  //       });
-  //       Dio()
-  //           .get(data.src, options: Options(headers: {"Referer": data.referer}))
-  //           .then((value) {
-  //         setState(() {
-  //           extractQualityAndLinks(value.data);
-  //           // quality = data.qualities;
-  //         });
-  //       });
-  //     } else {
-  //       Toast.show("Media not found");
-  //       Navigator.pop(context);
-  //     }
-  //   } catch (e) {
-  //     rethrow;
-  //   }
-  // }
 
   String formatDuration(Duration duration) {
     final hours = duration.inHours;
@@ -191,10 +121,15 @@ class _MediaPlayerState extends State<MediaPlayer> {
     ].join(':');
   }
 
+  void _close() {
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     Size screen = MediaQuery.of(context).size;
     var vidocontroll = MaterialVideoControlsThemeData(
+        shiftSubtitlesOnControlsVisibilityChange: true,
         brightnessGesture: true,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         volumeGesture: true,
@@ -215,15 +150,16 @@ class _MediaPlayerState extends State<MediaPlayer> {
               color: Colors.white,
             ),
             onPressed: () {
-              Navigator.pop(context);
+              _close();
             },
           ),
           SizedBox(
             width: screen.width * 0.6,
             child: ListTile(
+              key: ValueKey(data.provider.name),
               contentPadding: EdgeInsets.zero,
               subtitle: Text(
-                data != Null ? data.provider.name : "Unknown",
+                data.provider.name,
                 style: const TextStyle(fontSize: 10),
               ),
               title: Text(widget.episode.title ?? "",
@@ -271,7 +207,7 @@ class _MediaPlayerState extends State<MediaPlayer> {
                                 child: Text(
                                   e["label"],
                                   style: TextStyle(
-                                      color: e["url"] != ""
+                                      color: e["file"] != ""
                                           ? (e["label"] == currentCaption
                                               ? Colors.green
                                               : Colors.white)
@@ -302,6 +238,18 @@ class _MediaPlayerState extends State<MediaPlayer> {
                           .toList()
                           .cast<PopupMenuItem>()
                       : []),
+          PopupMenuButton(
+            icon: const Icon(Icons.more_vert_outlined),
+            itemBuilder: (context) => providers
+                .map((e) => PopupMenuItem(
+                      child: Text(e.getProviderName()),
+                      onTap: () async {
+                        _setSource(selectedProvider: e);
+                      },
+                    ))
+                .toList()
+                .cast<PopupMenuItem>(),
+          ),
         ],
         bottomButtonBar: [
           const SizedBox(
@@ -370,48 +318,45 @@ class _MediaPlayerState extends State<MediaPlayer> {
         ]);
 
     return CallbackShortcuts(
-      bindings: <ShortcutActivator, VoidCallback>{
-        const SingleActivator(LogicalKeyboardKey.escape): () {
-          Navigator.pop(context);
+        bindings: <ShortcutActivator, VoidCallback>{
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            Navigator.pop(context);
+          },
+          const SingleActivator(LogicalKeyboardKey.arrowLeft): () {
+            player.seek(player.state.position - const Duration(seconds: 10));
+          },
+          const SingleActivator(LogicalKeyboardKey.arrowRight): () {
+            player.seek(player.state.position + const Duration(seconds: 10));
+          },
+          const SingleActivator(LogicalKeyboardKey.space): () {
+            player.playOrPause();
+          },
         },
-        const SingleActivator(LogicalKeyboardKey.arrowLeft): () {
-          player.seek(player.state.position - const Duration(seconds: 10));
-        },
-        const SingleActivator(LogicalKeyboardKey.arrowRight): () {
-          player.seek(player.state.position + const Duration(seconds: 10));
-        },
-        const SingleActivator(LogicalKeyboardKey.space): () {
-          player.playOrPause();
-        },
-      },
-      child: Focus(
-        autofocus: true,
-        child: MaterialVideoControlsTheme(
-          normal: vidocontroll,
-          fullscreen: vidocontroll,
-          child: Scaffold(
-            backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-            body: Video(
-              fit: kIsWeb ? BoxFit.fitWidth : BoxFit.fill,
-              controller: controller,
-              wakelock: true,
-              subtitleViewConfiguration: const SubtitleViewConfiguration(
-                style: TextStyle(
-                  height: 1.4,
-                  fontSize: 45.0,
-                  letterSpacing: 0.0,
-                  wordSpacing: 0.0,
-                  color: Colors.yellow,
-                  fontWeight: FontWeight.normal,
-                ),
-                textAlign: TextAlign.center,
-                padding: EdgeInsets.all(24.0),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+        child: Focus(
+            autofocus: true,
+            child: MaterialVideoControlsTheme(
+                normal: vidocontroll,
+                fullscreen: vidocontroll,
+                child: Scaffold(
+                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+                  body: Video(
+                    fit: kIsWeb ? BoxFit.fitWidth : BoxFit.fill,
+                    controller: controller,
+                    wakelock: true,
+                    subtitleViewConfiguration: const SubtitleViewConfiguration(
+                      style: TextStyle(
+                        height: 1.4,
+                        fontSize: 45.0,
+                        letterSpacing: 0.0,
+                        wordSpacing: 0.0,
+                        color: Colors.yellow,
+                        fontWeight: FontWeight.normal,
+                      ),
+                      textAlign: TextAlign.center,
+                      padding: EdgeInsets.all(24.0),
+                    ),
+                  ),
+                ))));
   }
 
   void extractQualityAndLinks(String m3u8Content) {
@@ -431,12 +376,12 @@ class _MediaPlayerState extends State<MediaPlayer> {
         String url = lines[i + 1].startsWith("http")
             ? lines[i + 1]
             : Uri.decodeComponent(lines[i + 1]);
-
-        if (!url.startsWith("http")) {
+        if (url.startsWith("?url=")) {
+          url = Uri.parse(url.split("?url=").last).toString();
+        } else if (!url.startsWith("http")) {
           url =
               "https://${url.split("base=").last}${url.split("viper").last.split(".png")[0]}";
         }
-
         if (resolution != null && int.parse(resolution) > highestQuality) {
           highestQuality = int.parse(resolution);
           highestQualityUrl = url;
@@ -445,25 +390,26 @@ class _MediaPlayerState extends State<MediaPlayer> {
         results.add(Quality(resolution: resolution ?? 'Unknown', url: url));
       }
     }
+    if (mounted) {
+      Future.delayed(const Duration(seconds: 6)).then((value) {
+        print("test $value");
+        if (player.state.videoParams.aspect == null &&
+            highestQualityUrl.isNotEmpty &&
+            player.state.buffering) {
+          print(
+              "test fixed vidsrc.net playlist error with $highestQualityUrl $highestQuality ");
+          player.open(
+              Media(highestQualityUrl, httpHeaders: {"Referer": data.referer}));
+        }
+      });
 
-    Future.delayed(const Duration(seconds: 4)).then((value) {
-      print("test $value");
-      if (player.state.videoParams.aspect == null &&
-          highestQualityUrl.isNotEmpty &&
-          player.state.buffering) {
-        print(
-            "test fixed vidsrc.net playlist error with $highestQualityUrl $highestQuality ");
-        player.open(
-            Media(highestQualityUrl, httpHeaders: {"Referer": data.referer}));
-      }
-    });
-
-    setState(() {
-      data.qualities = [
-        ...results,
-        Quality(resolution: "Default", url: data.src)
-      ];
-    });
+      setState(() {
+        data.qualities = [
+          ...results,
+          Quality(resolution: "Default", url: data.src)
+        ];
+      });
+    }
   }
 
   @override
@@ -503,3 +449,5 @@ class _MediaPlayerState extends State<MediaPlayer> {
 //             }
 //           }));
 // }
+
+

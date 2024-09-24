@@ -7,6 +7,7 @@ import 'package:movie/services/serviceProvider.dart';
 
 class VidsrcNet implements ServiceProvider {
   var vidSrcBaseURL = "https://vidsrc.net";
+  var subtitleBaseURL = "https://ate60vs7zcjhsjo5qgv8.com/";
   VidsrcNet() {
     if (MySettings.box.containsKey("beta")) {
       vidSrcBaseURL = MySettings.box.get("beta")!;
@@ -159,35 +160,67 @@ class VidsrcNet implements ServiceProvider {
           decoded.length,
           (i) => String.fromCharCode(
               decoded.codeUnitAt(i) ^ extendedKey.codeUnitAt(i))).join();
+    },
+    "playerjs": (String x) {
+      Map<String, String> v = {
+        "file3_separator": "/@#@/",
+        "bk0": r"%?6497.[:4",
+        "bk1": r"=(=:19705/",
+        "bk2": r":]&*1@@1=&",
+        "bk3": r"33-*.4/9[6",
+        "bk4": r"*,4).(_)()",
+      };
+      String a = x.substring(2).replaceAll("\\", "");
+      for (int i = 4; i >= 0; i--) {
+        if (v['bk$i'] != null) {
+          a = a.replaceAll(
+            '${v['file3_separator']}${base64.encode(
+              utf8.encode(
+                Uri.encodeComponent(v['bk$i']!).replaceAllMapped(
+                  RegExp(r'%([0-9A-F]{2})'),
+                  (match) => String.fromCharCode(
+                      int.parse(match.group(1)!, radix: 16)),
+                ),
+              ),
+            )}',
+            '',
+          );
+        }
+      }
+      try {
+        a = utf8.decode(base64.decode(a));
+        return a;
+      } catch (e) {
+        print("got error: ");
+        return "";
+      }
     }
   };
 
-  List<Quality> extractQualityAndLinks(String m3u8Content) {
-    final lines = m3u8Content.split("\n");
-    final List<Quality> results = [];
-
-    for (var i = 0; i < lines.length; i++) {
-      if (lines[i].startsWith("#EXT-X-STREAM-INF")) {
-        final resolutionMatch =
-            RegExp(r'RESOLUTION=(\d+x\d+)').firstMatch(lines[i]);
-        final urlMatch = lines[i + 1].startsWith("http")
-            ? lines[i + 1]
-            : RegExp(r'\?url=(.*)').firstMatch(lines[i + 1])?.group(1);
-        if (resolutionMatch != null && urlMatch != null) {
-          final resolution = resolutionMatch.group(1)?.split("x").last;
-          var url = Uri.decodeComponent(urlMatch);
-          if (!url.startsWith("http")) {
-            url =
-                "https://${url.split("base=").last}${url.split("viper").last.split(".png")[0]}";
-          }
-          results.add(
-              Quality(resolution: resolution ?? "Unknow Quality", url: url));
-        }
-      }
-    }
-
-    return results;
-  }
+  // List<Quality> extractQualityAndLinks(String m3u8Content) {
+  //   final lines = m3u8Content.split("\n");
+  //   final List<Quality> results = [];
+  //   for (var i = 0; i < lines.length; i++) {
+  //     if (lines[i].startsWith("#EXT-X-STREAM-INF")) {
+  //       final resolutionMatch =
+  //           RegExp(r'RESOLUTION=(\d+x\d+)').firstMatch(lines[i]);
+  //       final urlMatch = lines[i + 1].startsWith("http")
+  //           ? lines[i + 1]
+  //           : RegExp(r'\?url=(.*)').firstMatch(lines[i + 1])?.group(1);
+  //       if (resolutionMatch != null && urlMatch != null) {
+  //         final resolution = resolutionMatch.group(1)?.split("x").last;
+  //         var url = Uri.decodeComponent(urlMatch);
+  //         if (!url.startsWith("http")) {
+  //           url =
+  //               "https://${url.split("base=").last}${url.split("viper").last.split(".png")[0]}";
+  //         }
+  //         results.add(
+  //             Quality(resolution: resolution ?? "Unknow Quality", url: url));
+  //       }
+  //     }
+  //   }
+  //   return results;
+  // }
 
   @override
   Future<MediaData> getSource(
@@ -213,19 +246,50 @@ class VidsrcNet implements ServiceProvider {
 
       final encryptedURLResponse = await Dio()
           .get(urlPRORCP, options: Options(headers: {'Referer': urlRCP}));
+
+      var playerjsEncrypted = RegExp(r'Playerjs\({.*file:"(.*?)",.*?}\)')
+          .firstMatch(encryptedURLResponse.data)![1];
+
+      if (playerjsEncrypted!.isNotEmpty) {
+        result = MediaData(
+            src: decryptMethods["playerjs"](playerjsEncrypted),
+            qualities: [],
+            provider: SrcProvider.VidsrcNet,
+            referer: urlRCP.split("rcp")[0],
+            subtitles: []);
+        return result;
+      }
       final node = parse(encryptedURLResponse.data)
           .querySelector("#reporting_content")!
           .nextElementSibling;
+      var subs = RegExp('default_subtitles.*?"(.*?)";')
+          .allMatches(encryptedURLResponse.data)
+          .last[1]!
+          .trim();
+      var captions = [];
+      if (subs.isNotEmpty) {
+        captions = subs.split(",").map((e) {
+          var url = e.split("]").last.trim();
+          return {
+            "label": RegExp(r'\[(.*?)\]').firstMatch(e)![1],
+            "file": url.startsWith("http") ? url : subtitleBaseURL + url
+          };
+        }).toList();
+      }
+
       result = MediaData(
           src: decryptMethods[node!.id]!(node.text),
           qualities: [],
           provider: SrcProvider.VidsrcNet,
           referer: urlRCP.split("rcp")[0],
-          subtitles: []);
+          subtitles: captions);
     } catch (e) {
       print(e);
-      throw Exception("Vidsrc.xyz Faild to Extract");
+      throw Exception("Vidsrc.xyz Faild to Extract $e");
     }
     return result;
   }
+
+  @override
+  String getProviderName() => 'Vidsrc.net';
 }

@@ -7,4 +7,5 @@ abstract class ServiceProvider {
     int? season,
     int? episode,
   });
+  String getProviderName();
 }

@@ -116,4 +116,7 @@ class VidsrcPro implements ServiceProvider {
       throw Exception("Faild to extract from vidsrc.pro");
     }
   }
+
+  @override
+  String getProviderName() => 'Vidsrc.pro';
 }

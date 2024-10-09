@@ -1,13 +1,48 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import '../model/model.dart';
 
 class TMDB {
+  static const _logoBaseUrl = "https://image.tmdb.org/t/p/original";
+
   static Map<int, Movie> bucket = {};
+  static Map<String, dynamic> cache = {};
+  static bool _isCached(String key) {
+    return cache.containsKey(key);
+  }
+
   static var apiDio = Dio(BaseOptions(headers: {
     "accept": "application/json",
     "Authorization":
         "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0NGYzYWQ5ZTBmN2Y1MDQ3N2NlODE5MzgzZjhlYzUxZCIsInN1YiI6IjY0YTY4MjZjMDM5OGFiMDBjYTIwN2RjNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.bjz5ilcldqN6GZPqjTsANgzJprPSOXJ-FYVWLv_dJZw"
   }));
+
+  static Future<String> getLogo(int id, bool isTv) async {
+    var url =
+        "https://api.themoviedb.org/3/${isTv ? "tv" : "movie"}/$id/images";
+    dynamic data;
+    if (_isCached(url)) {
+      data = jsonDecode(cache[url]);
+    } else {
+      data = (await apiDio.get(
+        url,
+      ))
+          .data;
+      cache[url] = jsonEncode(data);
+    }
+    try {
+      var logoElement = (data["logos"] as List)
+              .firstWhere((element) => element["iso_639_1"] == "en") ??
+          data["logos"].first;
+      print(logoElement);
+
+      return _logoBaseUrl + logoElement?["file_path"];
+    } catch (e) {
+      return "";
+    }
+  }
+
   static Future<List<HomeData>> fetchTopRated({String page = "1"}) async {
     List<HomeData> data = [];
 
@@ -66,6 +101,7 @@ class TMDB {
       ..releaseDate = data["first_air_date"]
       ..title = data["name"]
       ..description = data["overview"]
+      ..geners = data["genres"].map((g) => g["name"]).toList()
       ..image = data["poster_path"].runtimeType != Null
           ? "https://media.themoviedb.org/t/p/w600_and_h900_bestv2${data["poster_path"]}"
           : "https://picsum.photos/seed/picsum/200/300"
@@ -81,8 +117,10 @@ class TMDB {
             .map((e) {
               if ((!e["name"].contains("Specials")) &&
                   e["poster_path"] != null) {
-                return Seasons(e["season_number"],
-                    "https://media.themoviedb.org/t/p/w260_and_h390_bestv2${e["poster_path"]}")
+                return Seasons(
+                    e["season_number"],
+                    "https://media.themoviedb.org/t/p/w260_and_h390_bestv2${e["poster_path"]}",
+                    e["overview"])
                   ..episodes = [];
               }
             })

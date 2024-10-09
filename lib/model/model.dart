@@ -3,6 +3,7 @@
 class Movie {
   final String id;
   String? title;
+  String? logo;
   String? description;
   String? image;
   String? cover;
@@ -46,19 +47,21 @@ class Seasons {
   final int season;
   String? image;
   List<Episode>? episodes;
+  String overview;
 
-  Seasons(this.season, this.image);
+  Seasons(this.season, this.image, this.overview);
 
   static Seasons fromJSON(dynamic json) {
     return Seasons(
-      json["season"],
-      json["image"].runtimeType != Null
-          ? json["image"]["mobile"]
-          : json["img"]["mobile"],
-    )..episodes = json["episodes"]
-        .map((e) => Episode.fromJSON(e))
-        .toList()
-        .cast<Episode>();
+        json["season"],
+        json["image"].runtimeType != Null
+            ? json["image"]["mobile"]
+            : json["img"]["mobile"],
+        json["overview"])
+      ..episodes = json["episodes"]
+          .map((e) => Episode.fromJSON(e))
+          .toList()
+          .cast<Episode>();
   }
 
   @override
@@ -157,14 +160,14 @@ class HomeData {
 class MediaData {
   final String src;
   List<Quality> qualities;
-  final String referer;
+  final Map<String, String> headers;
   List subtitles;
   SrcProvider provider;
 
   MediaData(
       {required this.src,
       required this.qualities,
-      required this.referer,
+      required this.headers,
       required this.subtitles,
       required this.provider});
 }

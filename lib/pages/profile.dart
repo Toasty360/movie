@@ -60,9 +60,8 @@ class _ProfileState extends State<Profile> {
                     TextButton(
                         onPressed: () {
                           settings.putAll({
-                            'alpha': 'https://vidsrc.pro',
+                            'alpha': 'https://embed.su',
                             'beta': 'https://vidsrc.net',
-                            'vidlink': 'https://hugo.vidlink.pro',
                           });
                         },
                         child: Container(

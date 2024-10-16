@@ -3,6 +3,7 @@ import 'package:movie/components/big_guy.dart';
 import 'package:movie/components/heading.dart';
 import 'package:movie/components/grid.dart';
 import 'package:movie/components/menu.dart';
+import 'package:movie/components/search.dart';
 import 'package:movie/model/model.dart';
 import 'package:movie/services/tmdb.dart';
 import 'package:toast/toast.dart';
@@ -42,6 +43,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     final screen = MediaQuery.of(context).size;
+
     return Scaffold(
         backgroundColor: Colors.black,
         drawer: const ShowDrawer(),
@@ -59,6 +61,7 @@ class _HomeState extends State<Home> {
                 children: trending.isNotEmpty
                     ? [
                         BigGuy(focusedItem: focusedItem, logo: logo),
+                        const MySearchBar(),
                         const Heading("Trending"),
                         MyGrid(trending)
                       ]

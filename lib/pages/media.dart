@@ -7,10 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:movie/components/mediaControlls.dart';
-import 'package:movie/extractors/vidsrcNet.dart';
-import 'package:movie/model/serviceProvider.dart';
-import 'package:movie/extractors/vidlink.dart';
-import 'package:movie/extractors/vidsrcPro.dart';
+import 'package:movie/components/task.dart';
+import 'package:movie/model/service_provider.dart';
+import 'package:movie/services/open_subs.dart';
+import 'package:movie/services/tmdb.dart';
 import 'package:toast/toast.dart';
 import '../model/model.dart';
 
@@ -35,16 +35,12 @@ class _MediaPlayerState extends State<MediaPlayer> {
         androidAttachSurfaceAfterVideoParameters: false,
         enableHardwareAcceleration: true),
   );
-  final List<ServiceProvider> providers = [
-    VidsrcNet(),
-    VidLink(),
-    VidsrcPro(),
-  ];
+
   String currentQuality = "";
   String currentCaption = "";
   double playbackSpeed = 1;
   MediaData data = MediaData(
-      provider: SrcProvider.none,
+      provider: SrcProvider.VidsrcNet,
       qualities: [],
       headers: {},
       src: "",
@@ -52,15 +48,42 @@ class _MediaPlayerState extends State<MediaPlayer> {
 
   @override
   void initState() {
-    _setSource().then((value) {
-      setState(() {});
+    super.initState();
+
+    player.stream.log.listen((event) {
+      print("listen: ${event.text}");
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      showTaskDialog(widget.episode, context).then((value) {
+        print(value.src);
+        if (value.subtitles.isEmpty) {
+          TMDB
+              .fetchImdbId(widget.episode.id, widget.episode.season == null)
+              .then((value) => loadSubtitles(
+                      value, widget.episode.season == null,
+                      e: widget.episode.episode, s: widget.episode.season)
+                  .then((sub) => player
+                          .setSubtitleTrack(SubtitleTrack.data(sub))
+                          .then((value) {
+                        print("test: $sub");
+                        Toast.show("Added Subtitle");
+                      })));
+        }
+        player.open(
+          Media(value.src, httpHeaders: !kIsWeb ? value.headers : {}),
+          play: true,
+        );
+        extractQualityAndLinks(value);
+        setState(() => data = value);
+      });
+    });
+
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
-    super.initState();
   }
 
   Future<void> _setSource({ServiceProvider? selectedProvider}) async {
@@ -71,9 +94,12 @@ class _MediaPlayerState extends State<MediaPlayer> {
       if (!mounted) break;
       try {
         data = widget.episode.season == null
-            ? await provider.getSource(widget.episode.id, true)
+            ? await provider.getSource(widget.episode.id, true,
+                title: widget.episode.title)
             : await provider.getSource(widget.episode.id, false,
-                season: widget.episode.season, episode: widget.episode.episode);
+                season: widget.episode.season,
+                episode: widget.episode.episode,
+                title: widget.episode.title);
 
         if (!mounted) break;
         print(data.src.split(":").last);
@@ -97,24 +123,10 @@ class _MediaPlayerState extends State<MediaPlayer> {
         print("Error: $e, trying next source...");
       }
     }
-
-    // Check if no source was found
     if (data.src.isEmpty) {
       Toast.show("No sources available");
       _close();
     }
-  }
-
-  String formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes % 60;
-    final seconds = duration.inSeconds % 60;
-
-    return [
-      if (hours > 0) hours.toString().padLeft(2, '0'),
-      minutes.toString().padLeft(2, '0'),
-      seconds.toString().padLeft(2, '0')
-    ].join(':');
   }
 
   void _close() {
@@ -140,31 +152,10 @@ class _MediaPlayerState extends State<MediaPlayer> {
         },
         child: Focus(
             autofocus: true,
-            child: getMediaControlls(
-                controller,
-                Scaffold(
-                  backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                  body: Video(
-                    fit: kIsWeb ? BoxFit.fitWidth : BoxFit.fill,
-                    controller: controller,
-                    wakelock: true,
-                    subtitleViewConfiguration: const SubtitleViewConfiguration(
-                      style: TextStyle(
-                        height: 1.4,
-                        fontSize: 45.0,
-                        letterSpacing: 0.0,
-                        wordSpacing: 0.0,
-                        color: Colors.yellow,
-                        fontWeight: FontWeight.normal,
-                      ),
-                      textAlign: TextAlign.center,
-                      padding: EdgeInsets.all(24.0),
-                    ),
-                  ),
-                ),
-                topBar(),
-                movementControl(),
-                context)));
+            child: kIsWeb
+                ? videobody()
+                : getMediaControlls(controller, videobody(), topBar(),
+                    movementControl(), context)));
   }
 
   void extractQualityAndLinks(MediaData data) async {
@@ -179,6 +170,7 @@ class _MediaPlayerState extends State<MediaPlayer> {
     int highestQuality = 0;
     final results = <Quality>[];
 
+    print(m3u8Content);
     final lines = m3u8Content.split("\n");
 
     for (var i = 0; i < lines.length - 1; i++) {
@@ -262,8 +254,6 @@ class _MediaPlayerState extends State<MediaPlayer> {
                   .map((e) => PopupMenuItem(
                         child: Text(e.resolution),
                         onTap: () {
-                          print(e.url.split(":").last);
-                          print(data.headers["referer"]!.split(":").last);
                           var pos = player.state.position;
                           Toast.show(e.resolution);
                           player
@@ -282,7 +272,7 @@ class _MediaPlayerState extends State<MediaPlayer> {
                   .cast<PopupMenuItem>()
               : []),
       PopupMenuButton(
-          icon: const Icon(Icons.closed_caption_rounded),
+          icon: const Icon(Icons.closed_caption),
           tooltip: "Captions",
           itemBuilder: (context) => data.runtimeType != Null &&
                   data.subtitles.runtimeType != Null
@@ -391,6 +381,29 @@ class _MediaPlayerState extends State<MediaPlayer> {
         },
       ),
     ];
+  }
+
+  Widget videobody() {
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+      body: Video(
+        fit: kIsWeb ? BoxFit.fitWidth : BoxFit.fill,
+        controller: controller,
+        wakelock: true,
+        subtitleViewConfiguration: const SubtitleViewConfiguration(
+          style: TextStyle(
+            height: 1.4,
+            fontSize: 45.0,
+            letterSpacing: 0.0,
+            wordSpacing: 0.0,
+            color: Colors.yellow,
+            fontWeight: FontWeight.normal,
+          ),
+          textAlign: TextAlign.center,
+          padding: EdgeInsets.all(24.0),
+        ),
+      ),
+    );
   }
 
   @override

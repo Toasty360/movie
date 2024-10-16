@@ -1,18 +1,34 @@
-// ignore_for_file: constant_identifier_names
+import 'package:hive/hive.dart';
 
-class Movie {
+part 'model.g.dart';
+
+@HiveType(typeId: 2)
+class Movie extends HiveObject {
+  @HiveField(0)
   final String id;
+  @HiveField(1)
   String? title;
+  @HiveField(2)
   String? logo;
+  @HiveField(3)
   String? description;
+  @HiveField(4)
   String? image;
+  @HiveField(5)
   String? cover;
+  @HiveField(6)
   String? type;
+  @HiveField(7)
   String? rating;
+  @HiveField(8)
   String? releaseDate;
+  @HiveField(9)
   List? geners;
+  @HiveField(10)
   int? totalEpisodes;
+  @HiveField(11)
   int? totalSeasons;
+  @HiveField(12)
   List<Seasons>? seasons;
   Movie(
     this.id,
@@ -43,10 +59,15 @@ class Movie {
   }
 }
 
-class Seasons {
+@HiveType(typeId: 1)
+class Seasons extends HiveObject {
+  @HiveField(0)
   final int season;
+  @HiveField(1)
   String? image;
+  @HiveField(2)
   List<Episode>? episodes;
+  @HiveField(3)
   String overview;
 
   Seasons(this.season, this.image, this.overview);
@@ -70,15 +91,25 @@ class Seasons {
   }
 }
 
-class Episode {
+@HiveType(typeId: 0)
+class Episode extends HiveObject {
+  @HiveField(0)
   int id;
+  @HiveField(1)
   String type;
+  @HiveField(2)
   String? title;
+  @HiveField(3)
   int? episode;
+  @HiveField(4)
   int? season;
+  @HiveField(5)
   String? releaseDate;
+  @HiveField(6)
   String? description;
+  @HiveField(7)
   String? image;
+  @HiveField(8)
   String? cover;
 
   Episode(
@@ -188,5 +219,7 @@ enum SrcProvider {
   VidsrcPro,
   VidsrcNet,
   VidLink,
+  CatFlix,
+  Embed2,
   none;
 }

@@ -39,7 +39,8 @@ class _DetailsPageState extends State<DetailsPage> {
       TMDB.fetchMovieDetails(data.id, isTv).then((value) async {
         info = value;
         isFetched = true;
-        info.logo = await futureLogo;
+        info.logo = (await futureLogo).trim();
+        print("logo: ${info.logo!} ${info.logo!.isNotEmpty}");
         setState(() {});
       });
     } catch (e) {
@@ -63,6 +64,11 @@ class _DetailsPageState extends State<DetailsPage> {
       child: Focus(
         autofocus: true,
         child: Scaffold(
+            floatingActionButton: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () => Navigator.pop(context),
+            ),
+            floatingActionButtonLocation: FloatingActionButtonLocation.startTop,
             backgroundColor: Colors.black,
             body: ListView(
                 padding: EdgeInsets.zero,
@@ -132,7 +138,16 @@ class _DetailsPageState extends State<DetailsPage> {
                                                 maxWidth: 300, maxHeight: 200)
                                             : const BoxConstraints(
                                                 maxWidth: 200, maxHeight: 100),
-                                        child: Image.network(info.logo!),
+                                        child: info.logo!.isNotEmpty
+                                            ? Image.network(info.logo!)
+                                            : Text(
+                                                info.title!,
+                                                style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.w900,
+                                                    color:
+                                                        Colors.yellow.shade600),
+                                              ),
                                       )
                                     : const Center(),
                                 Container(

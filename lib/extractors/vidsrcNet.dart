@@ -1,20 +1,19 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:html/parser.dart';
-import 'package:movie/main.dart';
 import 'package:movie/model/model.dart';
-import 'package:movie/model/serviceProvider.dart';
+import 'package:movie/model/service_provider.dart';
 
 class VidsrcNet implements ServiceProvider {
   var vidSrcBaseURL = "https://vidsrc.net";
   var subtitleBaseURL = "https://ate60vs7zcjhsjo5qgv8.com/";
-  VidsrcNet() {
-    if (MySettings.box.containsKey("beta")) {
-      vidSrcBaseURL = MySettings.box.get("beta")!;
-    } else {
-      MySettings.box.put("beta", vidSrcBaseURL);
-    }
-  }
+  // VidsrcNet() {
+  //   if (MySettings.box.containsKey("beta")) {
+  //     vidSrcBaseURL = MySettings.box.get("beta")!;
+  //   } else {
+  //     MySettings.box.put("beta", vidSrcBaseURL);
+  //   }
+  // }
 
   final Map decryptMethods = {
     "TsA2KGDGux": (String input) {
@@ -223,16 +222,11 @@ class VidsrcNet implements ServiceProvider {
   // }
 
   @override
-  Future<MediaData> getSource(
-    int id,
-    bool isMovie, {
-    int? season,
-    int? episode,
-  }) async {
+  Future<MediaData> getSource(int id, bool isMovie,
+      {int? season, int? episode, String? title}) async {
     MediaData result;
     var url =
         '$vidSrcBaseURL/embed/${isMovie ? "movie?tmdb=$id" : "tv?tmdb=$id&season=$season&episode=$episode"}';
-    print(url);
     try {
       final response = await Dio().get(url);
       final source = response.data;
@@ -249,7 +243,6 @@ class VidsrcNet implements ServiceProvider {
 
       var playerjsEncrypted = RegExp(r'Playerjs\({.*file:"(.*?)",.*?}\)')
           .firstMatch(encryptedURLResponse.data)![1];
-      print("playerjsEncrypted: $playerjsEncrypted");
       if (playerjsEncrypted!.isNotEmpty) {
         result = MediaData(
             src: decryptMethods["playerjs"](playerjsEncrypted),

@@ -1,48 +1,10 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:movie/main.dart';
 import 'package:movie/model/model.dart';
-import 'package:movie/model/serviceProvider.dart';
+import 'package:movie/model/service_provider.dart';
 
 class VidsrcPro implements ServiceProvider {
   String vidSrcBaseURL = "http://embed.su";
-
-  VidsrcPro() {
-    if (MySettings.box.containsKey("vidsrc.pro")) {
-      vidSrcBaseURL = MySettings.box.get("alpha")!;
-    } else {
-      MySettings.box.put("alpha", vidSrcBaseURL);
-    }
-  }
-
-  // List<Quality> _extractQualityAndLinks(String m3u8Content) {
-  //   final lines = m3u8Content.split("\n");
-  //   final List<Quality> results = [];
-  //   try {
-  //     for (var i = 0; i < lines.length; i++) {
-  //       if (lines[i].startsWith("#EXT-X-STREAM-INF")) {
-  //         final resolutionMatch =
-  //             RegExp(r'RESOLUTION=(\d+x\d+)').firstMatch(lines[i]);
-  //         final urlMatch = lines[i + 1].contains("http")
-  //             ? RegExp(r'\?url=(.*)').firstMatch(lines[i + 1])?.group(1)
-  //             : lines[i + 1];
-  //         if (resolutionMatch != null && urlMatch != null) {
-  //           final resolution = resolutionMatch.group(1)?.split("x").last;
-  //           var url = Uri.decodeComponent(urlMatch);
-  //           if (!url.startsWith("http")) {
-  //             url =
-  //                 "https://${url.split("base=").last}${url.split("viper").last.split(".png")[0]}";
-  //           }
-  //           results.add(
-  //               Quality(resolution: resolution ?? "Unknown Quality", url: url));
-  //         }
-  //       }
-  //     }
-  //   } catch (e) {
-  //     print("got Error");
-  //   }
-  //   return results;
-  // }
 
   @override
   Future<MediaData> getSource(
@@ -50,12 +12,11 @@ class VidsrcPro implements ServiceProvider {
     bool isMovie, {
     int? season,
     int? episode,
+    String? title,
   }) async {
     try {
       final dio = Dio();
-      // print(
-      //     "$vidSrcBaseURL/embed/${isMovie ? 'movie/$id' : 'tv/$id/$season/$episode'}"
-      //         .split(":"));
+
       final response = (await dio.get(
         "$vidSrcBaseURL/embed/${isMovie ? 'movie/$id' : 'tv/$id/$season/$episode'}",
         options: Options(
@@ -81,6 +42,7 @@ class VidsrcPro implements ServiceProvider {
       final List decodedHash =
           json.decode(utf8.decode(base64Decode(atobString)));
       final sourceHash = decodedHash[0]['hash'];
+      final name = decodedHash[0]['name'];
       final sourceResponse = await dio.get(
         '$vidSrcBaseURL/api/e/$sourceHash',
         options: Options(
@@ -95,7 +57,7 @@ class VidsrcPro implements ServiceProvider {
         throw Exception('Failed to get video source');
       }
       final sourceData = sourceResponse.data;
-      String defaultsrc = sourceData['source'];
+      String defaultsrc = "https:/${sourceData['source'].split(name).last}";
       return MediaData(
           src: defaultsrc,
           provider: SrcProvider.VidsrcPro,

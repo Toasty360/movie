@@ -158,6 +158,13 @@ class TMDB {
     print(item.geners);
     return item;
   }
+
+  static Future<String> fetchImdbId(int id, bool isMovie) async {
+    final v = await (await apiDio.get(
+            "https://api.themoviedb.org/3/${isMovie ? "movie" : "tv"}/$id/external_ids"))
+        .data;
+    return v["imdb_id"];
+  }
 }
 //https://api.themoviedb.org/3/tv/76479?language=en-US
 //https://api.themoviedb.org/3/tv/76479/season/1?language=en-US

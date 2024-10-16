@@ -1,7 +1,9 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
+import 'package:movie/components/task.dart';
 
 import 'package:movie/model/menu_model.dart';
+import 'package:movie/model/model.dart';
 
 class MenuButton extends StatelessWidget {
   const MenuButton({super.key});
@@ -30,10 +32,14 @@ class ShowDrawerState extends State<ShowDrawer> {
       backgroundColor: Colors.black.withOpacity(0.7),
       width: 200,
       child: Center(
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children:
-                menuData.map((e) => MenuItem(item: e)).toList().cast<Widget>()),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+          ...menuData.map((e) => MenuItem(item: e)).toList().cast<Widget>(),
+          TextButton(
+              onPressed: () {
+                showTaskDialog(Episode(id: 1724, type: "movie"), context);
+              },
+              child: const Text("test")),
+        ]),
       ),
     );
   }

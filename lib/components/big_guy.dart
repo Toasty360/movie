@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:movie/components/logoSection.dart';
 import 'package:movie/model/model.dart';
+import 'package:movie/pages/details.dart';
 
 class BigGuy extends StatelessWidget {
   final HomeData focusedItem;
@@ -31,6 +32,7 @@ class BigGuy extends StatelessWidget {
             decoration: const BoxDecoration(
                 gradient: LinearGradient(
                     colors: [Colors.transparent, Colors.black],
+                    stops: [0.4, 0.9],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter)),
           ),
@@ -38,9 +40,28 @@ class BigGuy extends StatelessWidget {
             LogoSection(
               logo: logo,
               id: focusedItem.id,
+              description: focusedItem.description,
+              maxLines: 2,
               type: focusedItem.type,
               popularity: focusedItem.popularity,
               title: focusedItem.title,
+              addOn: InkWell(
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DetailsPage(data: focusedItem),
+                    )),
+                child: Container(
+                  margin: const EdgeInsets.only(left: 10),
+                  height: 28,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 2, horizontal: 6),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: Colors.white.withOpacity(0.1)),
+                  child: const Text("Show Details", style: TextStyle()),
+                ),
+              ),
             ),
         ],
       ),

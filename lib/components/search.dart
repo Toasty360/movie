@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:movie/components/snackbar.dart';
 import 'package:movie/services/tmdb.dart';
 
-class SearchBar extends StatelessWidget {
-  const SearchBar({super.key});
+class MySearchBar extends StatelessWidget {
+  const MySearchBar({super.key});
 
   @override
   Widget build(BuildContext context) {

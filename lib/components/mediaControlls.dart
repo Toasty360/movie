@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:io' show Platform;
 import 'package:media_kit_video/media_kit_video.dart';
@@ -47,6 +48,7 @@ Widget getMediaControlls(VideoController controller, Widget child,
         const Spacer(),
         ...bottomBar
       ]);
+
   if (Platform.isWindows) {
     return MaterialDesktopVideoControlsTheme(
         fullscreen: desktop, normal: desktop, child: child);

@@ -53,6 +53,52 @@ class Movie extends HiveObject {
           : [];
   }
 
+  static Movie fromSearch(dynamic json) {
+    return Movie(json["id"].toString())
+      ..title = json["title"]
+      ..type = json["type"].split(" ").first
+      ..description = json["description"] ?? ""
+      ..image = json["image"]
+      ..cover = json["cover"] ?? ""
+      ..rating = json["popularity"] ?? json["rating"].toString()
+      ..releaseDate = json["releaseDate"];
+  }
+
+  static Movie fromPopular(dynamic json) {
+    return Movie(json["id"].toString())
+      ..title = json["title"] ?? json["original_title"] ?? json["name"]
+      ..type = json["media_type"]
+      ..description = json["overview"]
+      ..rating = json["popularity"].toString()
+      ..image = "https://www.themoviedb.org/t/p/original/${json["poster_path"]}"
+      ..cover =
+          "https://www.themoviedb.org/t/p/original/${json["backdrop_path"]}"
+      ..releaseDate = (RegExp(r'^(\d{4})')
+                  .firstMatch(
+                      json["release_date"] ?? json["first_air_date"] ?? "")
+                  ?.group(1) ??
+              'No match')
+          .trim();
+  }
+
+  static Movie mergeMovie(Movie a, Movie b) {
+    return Movie(
+      a.id,
+    )
+      ..title = b.title ?? a.title
+      ..logo = b.logo ?? a.logo
+      ..description = b.description ?? a.description
+      ..image = b.image ?? a.image
+      ..cover = b.cover ?? a.cover
+      ..type = b.type ?? a.type
+      ..rating = b.rating ?? a.rating
+      ..releaseDate = b.releaseDate ?? a.releaseDate
+      ..geners = b.geners
+      ..totalEpisodes = b.totalEpisodes ?? a.totalEpisodes
+      ..totalSeasons = b.totalSeasons ?? a.totalSeasons
+      ..seasons = b.seasons;
+  }
+
   @override
   String toString() {
     return 'Movie{tmdbID: $id, releaseDate: $releaseDate, title: $title, description: $description, image: $image, cover: $cover, totalSeasons: $totalSeasons, genres: $geners, seasons: $seasons}';
@@ -143,50 +189,50 @@ class Episode extends HiveObject {
   }
 }
 
-class HomeData {
-  final int id;
-  final String title;
-  final String description;
-  final String type;
-  final String image;
-  final String cover;
-  final String popularity;
-  final String releaseDate;
+// class HomeData {
+//   final int id;
+//   final String title;
+//   final String description;
+//   final String type;
+//   final String image;
+//   final String cover;
+//   final String popularity;
+//   final String releaseDate;
 
-  HomeData(this.id, this.title, this.type, this.description, this.image,
-      this.cover, this.popularity, this.releaseDate);
+//   HomeData(this.id, this.title, this.type, this.description, this.image,
+//       this.cover, this.popularity, this.releaseDate);
 
-  static HomeData fromConsumet(json) {
-    return HomeData(
-        json["id"],
-        json["title"],
-        json["type"].split(" ").first,
-        json["description"] ?? "",
-        json["image"],
-        json["cover"] ?? "",
-        json["popularity"] ?? json["rating"].toString(),
-        json["releaseDate"]);
-  }
+//   static HomeData fromConsumet(json) {
+//     return HomeData(
+//         json["id"],
+//         json["title"],
+//         json["type"].split(" ").first,
+//         json["description"] ?? "",
+//         json["image"],
+//         json["cover"] ?? "",
+//         json["popularity"] ?? json["rating"].toString(),
+//         json["releaseDate"]);
+//   }
 
-  static HomeData fromJson(Map json) {
-    // print(json);
-    return HomeData(
-        json["id"],
-        json["title"] ?? json["original_title"] ?? json["name"],
-        json["media_type"],
-        json["overview"],
-        "https://www.themoviedb.org/t/p/original/${json["poster_path"]}",
-        "https://www.themoviedb.org/t/p/original/${json["backdrop_path"]}",
-        json["popularity"].toString(),
-        // json["release_date"] ?? json["first_air_date"] ?? ""
-        (RegExp(r'^(\d{4})')
-                    .firstMatch(
-                        json["release_date"] ?? json["first_air_date"] ?? "")
-                    ?.group(1) ??
-                'No match')
-            .trim());
-  }
-}
+//   static HomeData fromJson(Map json) {
+//     // print(json);
+//     return HomeData(
+//         json["id"],
+//         json["title"] ?? json["original_title"] ?? json["name"],
+//         json["media_type"],
+//         json["overview"],
+//         "https://www.themoviedb.org/t/p/original/${json["poster_path"]}",
+//         "https://www.themoviedb.org/t/p/original/${json["backdrop_path"]}",
+//         json["popularity"].toString(),
+//         // json["release_date"] ?? json["first_air_date"] ?? ""
+//         (RegExp(r'^(\d{4})')
+//                     .firstMatch(
+//                         json["release_date"] ?? json["first_air_date"] ?? "")
+//                     ?.group(1) ??
+//                 'No match')
+//             .trim());
+//   }
+// }
 
 class MediaData {
   final String src;

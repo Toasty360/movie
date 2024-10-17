@@ -42,12 +42,18 @@ class Catflix extends ServiceProvider {
         .trim();
     var url = isMovie ? 'movies/$catid' : "series/$catid-${season}x$episode";
     try {
-      final iframeResponse = await dio.get('$baseUrl/$url');
+      final iframeResponse = await dio.get('$baseUrl/$url',
+          options: Options(
+            validateStatus: (status) => true,
+          ));
       final String iframeUrl = RegExp(r'<iframe.*?src\s*=\s*"(.*?)"')
           .firstMatch(iframeResponse.data)!
           .group(1)!;
 
-      final options = Options(headers: {'Referer': iframeUrl});
+      final options = Options(
+        headers: {'Referer': iframeUrl},
+        validateStatus: (status) => true,
+      );
 
       final multipleResp = await Future.wait([
         dio.get(juiceUrl, options: options),

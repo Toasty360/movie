@@ -5,7 +5,7 @@ import 'package:movie/components/card.dart';
 import 'package:movie/model/model.dart';
 
 class MyGrid extends StatelessWidget {
-  final List<HomeData> data;
+  final List<Movie> data;
   const MyGrid(this.data, {super.key});
 
   @override

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import 'package:hive_flutter/adapters.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:movie/model/model.dart';
@@ -10,7 +12,7 @@ import 'package:path_provider/path_provider.dart';
 // 07707883225-01
 
 void main() async {
-  Future<List<HomeData>> trending = TMDB.fetchTopRated();
+  Future<List<Movie>> trending = TMDB.fetchTopRated();
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await Hive.initFlutter();
@@ -18,7 +20,10 @@ void main() async {
   Hive.registerAdapter(SeasonsAdapter());
   Hive.registerAdapter(MovieAdapter());
   await WatchList.initiateHive();
-
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent));
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     title: 'Moviemate',
@@ -32,15 +37,15 @@ void main() async {
 }
 
 class WatchList {
-  static late Box<Movie> watchList;
+  static late Box<Movie> _watchList;
 
   static Future<void> initiateHive() async {
     final appDocumentDirectory = await getApplicationDocumentsDirectory();
-    watchList =
+    _watchList =
         await Hive.openBox<Movie>("watchlist", path: appDocumentDirectory.path);
   }
 
-  static Box<Movie> get box => watchList;
+  static Box<Movie> get box => _watchList;
 }
 
 

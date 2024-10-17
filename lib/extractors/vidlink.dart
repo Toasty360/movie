@@ -38,8 +38,12 @@ class VidLink implements ServiceProvider {
       try {
         final encoded = CryptoMethods.encode(id.toString());
 
-        final response = await Dio().get(baseURL +
-            (isMovie ? 'movie/$encoded' : 'tv/$encoded/$season/$episode'));
+        final response = await Dio().get(
+            baseURL +
+                (isMovie ? 'movie/$encoded' : 'tv/$encoded/$season/$episode'),
+            options: Options(
+              validateStatus: (status) => true,
+            ));
         final data = jsonDecode(CryptoMethods.decode(response.data));
 
         return MediaData(
@@ -60,7 +64,10 @@ class VidLink implements ServiceProvider {
       }
     } else {
       var resp = await (await Dio().get(
-              "https://val-movieapi.vercel.app/vidlink/watch?isMovie=$isMovie&id=$id&season=$season&episode=$episode"))
+              "https://val-movieapi.vercel.app/vidlink/watch?isMovie=$isMovie&id=$id&season=$season&episode=$episode",
+              options: Options(
+                validateStatus: (status) => true,
+              )))
           .data;
       return MediaData(
           src: resp["stream"]["playlist"],

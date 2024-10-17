@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:dio/dio.dart';
 import '../model/model.dart';
@@ -43,14 +44,14 @@ class TMDB {
     }
   }
 
-  static Future<List<HomeData>> fetchTopRated({String page = "1"}) async {
-    List<HomeData> data = [];
+  static Future<List<Movie>> fetchTopRated({String page = "1"}) async {
+    List<Movie> data = [];
 
     Response v =
         await apiDio.get("https://api.themoviedb.org/3/trending/all/day");
     for (Map e in v.data["results"]) {
       try {
-        data.add(HomeData.fromJson(e));
+        data.add(Movie.fromPopular(e));
       } catch (error) {
         print("$error at ${e["title"]}");
       }
@@ -69,15 +70,15 @@ class TMDB {
     return v.statusCode == 200 ? Movie.fromJSON(v.data) : "";
   }
 
-  static Future<List<HomeData>> fetchSearchData(String text) async {
+  static Future<List<Movie>> fetchSearchData(String text) async {
     Response v =
         await Dio().get("https://valley-api.vercel.app/meta/tmdb/$text");
-    List<HomeData> data = [];
+    List<Movie> data = [];
     for (Map e in v.data["results"]) {
       try {
         if (!(e["image"].toString().endsWith("null") ||
             e["image"].toString().endsWith("undefined"))) {
-          data.add(HomeData.fromConsumet(e));
+          data.add(Movie.fromSearch(e));
         }
       } catch (error) {
         print(error);
@@ -96,10 +97,11 @@ class TMDB {
     final response = await apiDio.get(
         "https://api.themoviedb.org/3/${isTv ? "tv" : "movie"}/$tmdbID?language=en-US");
     final data = response.data;
-
+    developer.log(data.toString());
     Movie item = Movie(tmdbID.toString())
       ..releaseDate = data["first_air_date"]
       ..title = data["name"]
+      ..type = isTv ? "tv" : "movie"
       ..description = data["overview"]
       ..geners = data["genres"].map((g) => g["name"]).toList()
       ..image = data["poster_path"].runtimeType != Null
@@ -163,6 +165,7 @@ class TMDB {
     final v = await (await apiDio.get(
             "https://api.themoviedb.org/3/${isMovie ? "movie" : "tv"}/$id/external_ids"))
         .data;
+    print("test $id ${v["imdb_id"]}");
     return v["imdb_id"];
   }
 }

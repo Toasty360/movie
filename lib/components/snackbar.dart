@@ -4,7 +4,7 @@ import 'package:movie/model/model.dart';
 import 'package:movie/pages/details.dart';
 import 'package:toast/toast.dart';
 
-mysnack(Future<List<HomeData>> fuData, BuildContext context) {
+mysnack(Future<List<Movie>> fuData, BuildContext context) {
   return showModalBottomSheet(
     elevation: 0,
     isScrollControlled: true,
@@ -20,7 +20,7 @@ mysnack(Future<List<HomeData>> fuData, BuildContext context) {
       future: fuData,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          List<HomeData> data = snapshot.data!;
+          List<Movie> data = snapshot.data!;
           if (data.isEmpty) {
             Toast.show("No data found", duration: Toast.lengthShort);
             Navigator.pop(context);
@@ -38,7 +38,7 @@ mysnack(Future<List<HomeData>> fuData, BuildContext context) {
 }
 
 class SearchItem extends StatelessWidget {
-  final HomeData data;
+  final Movie data;
   const SearchItem({super.key, required this.data});
 
   @override
@@ -68,7 +68,7 @@ class SearchItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   image: DecorationImage(
                       fit: BoxFit.cover,
-                      image: ExtendedNetworkImageProvider(data.image))),
+                      image: ExtendedNetworkImageProvider(data.image!))),
             ),
             Container(
               width: 80,
@@ -79,7 +79,7 @@ class SearchItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      data.title,
+                      data.title!,
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
@@ -90,7 +90,7 @@ class SearchItem extends StatelessWidget {
                       height: 10,
                     ),
                     Text(
-                      data.type,
+                      data.type!,
                       textAlign: TextAlign.center,
                     ),
                     Container(
@@ -103,7 +103,7 @@ class SearchItem extends StatelessWidget {
                               Border.all(color: Colors.white.withOpacity(0.1)),
                           borderRadius: BorderRadius.circular(8)),
                       child: Text(
-                        data.releaseDate,
+                        data.releaseDate!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: Colors.white),
                       ),

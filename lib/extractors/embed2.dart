@@ -37,7 +37,11 @@ class Embed2 extends ServiceProvider {
       {int? season, int? episode, String? title = ""}) async {
     final url = isMovie ? "embed/$id" : "embedtv/$id&s=$season&e=$episode";
     print(url);
-    final resp = await (await Dio().get("$baseUrl/$url")).data;
+    final resp = await (await Dio().get("$baseUrl/$url",
+            options: Options(
+              validateStatus: (status) => true,
+            )))
+        .data;
 
     var iframeId = RegExp('''<iframe.*data-src=["'](.*?id=(.*?))["']''')
         .firstMatch(resp)?[2];

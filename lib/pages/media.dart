@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -46,6 +47,20 @@ class _MediaPlayerState extends State<MediaPlayer> {
       src: "",
       subtitles: []);
 
+  getEngSubs(MediaData value) {
+    if (value.subtitles.isEmpty) {
+      TMDB.fetchImdbId(widget.episode.id, widget.episode.season == null).then(
+          (value) => loadSubtitles(value, widget.episode.season == null,
+                  e: widget.episode.episode, s: widget.episode.season)
+              .then((sub) => player
+                      .setSubtitleTrack(SubtitleTrack.data(sub))
+                      .then((value) {
+                    log("test: $sub");
+                    Toast.show("Added Subtitle");
+                  })));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -57,19 +72,7 @@ class _MediaPlayerState extends State<MediaPlayer> {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       showTaskDialog(widget.episode, context).then((value) {
         print(value.src);
-        if (value.subtitles.isEmpty) {
-          TMDB
-              .fetchImdbId(widget.episode.id, widget.episode.season == null)
-              .then((value) => loadSubtitles(
-                      value, widget.episode.season == null,
-                      e: widget.episode.episode, s: widget.episode.season)
-                  .then((sub) => player
-                          .setSubtitleTrack(SubtitleTrack.data(sub))
-                          .then((value) {
-                        print("test: $sub");
-                        Toast.show("Added Subtitle");
-                      })));
-        }
+        // getEngSubs(value);
         player.open(
           Media(value.src, httpHeaders: !kIsWeb ? value.headers : {}),
           play: true,
@@ -115,8 +118,6 @@ class _MediaPlayerState extends State<MediaPlayer> {
             print("Failed to extract quality and links: $e");
           }
         }
-
-        // Break out of the loop after a successful source is set
         break;
       } catch (e) {
         Toast.show("${provider.runtimeType} failed to extract");
@@ -308,7 +309,12 @@ class _MediaPlayerState extends State<MediaPlayer> {
                       ))
                   .toList()
                   .cast<PopupMenuItem>()
-              : []),
+              : [
+                  PopupMenuItem(
+                    child: Text("Look up?"),
+                    onTap: () => getEngSubs(data),
+                  )
+                ]),
       PopupMenuButton(
         icon: const Icon(Icons.more_vert_outlined),
         itemBuilder: (context) => providers

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:movie/model/model.dart';
 import 'package:movie/pages/details.dart';
 
-cards(BuildContext context, HomeData item) {
+cards(BuildContext context, Movie item) {
   return InkWell(
     onTap: () => Navigator.push(
         context, MaterialPageRoute(builder: (ctx) => DetailsPage(data: item))),
@@ -15,7 +15,7 @@ cards(BuildContext context, HomeData item) {
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               image: DecorationImage(
-                image: ExtendedNetworkImageProvider(item.image, cache: true),
+                image: ExtendedNetworkImageProvider(item.image!, cache: true),
                 fit: BoxFit.cover,
               )),
         ),
@@ -34,7 +34,7 @@ cards(BuildContext context, HomeData item) {
                     Color.fromARGB(189, 0, 0, 0),
                   ])),
           child: Text(
-            item.title,
+            item.title!,
             overflow: TextOverflow.ellipsis,
             maxLines: 1,
             textAlign: TextAlign.center,

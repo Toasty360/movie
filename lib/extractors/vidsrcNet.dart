@@ -228,18 +228,27 @@ class VidsrcNet implements ServiceProvider {
     var url =
         '$vidSrcBaseURL/embed/${isMovie ? "movie?tmdb=$id" : "tv?tmdb=$id&season=$season&episode=$episode"}';
     try {
-      final response = await Dio().get(url);
+      final response = await Dio().get(url,
+          options: Options(
+            validateStatus: (status) => true,
+          ));
       final source = response.data;
       final urlRCP =
           'https:${RegExp(r'src="(.*?)"').firstMatch(source)!.group(1)!}';
 
-      final urlPRORCPResponse =
-          await Dio().get(urlRCP, options: Options(headers: {'Referer': url}));
+      final urlPRORCPResponse = await Dio().get(urlRCP,
+          options: Options(
+            headers: {'Referer': url},
+            validateStatus: (status) => true,
+          ));
       final urlPRORCP = urlRCP.split('rcp')[0] +
           RegExp(r"src.*'(.*?)'").firstMatch(urlPRORCPResponse.data)!.group(1)!;
 
-      final encryptedURLResponse = await Dio()
-          .get(urlPRORCP, options: Options(headers: {'Referer': urlRCP}));
+      final encryptedURLResponse = await Dio().get(urlPRORCP,
+          options: Options(
+            headers: {'Referer': urlRCP},
+            validateStatus: (status) => true,
+          ));
 
       var playerjsEncrypted = RegExp(r'Playerjs\({.*file:"(.*?)",.*?}\)')
           .firstMatch(encryptedURLResponse.data)![1];

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:movie/components/big_guy.dart';
 import 'package:movie/components/heading.dart';
 import 'package:movie/components/grid.dart';
@@ -9,7 +10,7 @@ import 'package:movie/services/tmdb.dart';
 import 'package:toast/toast.dart';
 
 class Home extends StatefulWidget {
-  final Future<List<HomeData>> data;
+  final Future<List<Movie>> data;
   const Home({super.key, required this.data});
 
   @override
@@ -17,8 +18,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  List<HomeData> trending = [];
-  late HomeData focusedItem;
+  List<Movie> trending = [];
+  late Movie focusedItem;
   String logo = "";
   @override
   void initState() {
@@ -31,7 +32,8 @@ class _HomeState extends State<Home> {
       });
 
       for (var item in value) {
-        logo = await TMDB.getLogo(item.id, item.type.toLowerCase() == "tv");
+        logo = await TMDB.getLogo(
+            int.parse(item.id), item.type!.toLowerCase() == "tv");
         if (logo.isNotEmpty) {
           setState(() => focusedItem = item);
           break;

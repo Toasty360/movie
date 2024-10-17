@@ -4,7 +4,7 @@ import 'package:movie/model/model.dart';
 import 'package:movie/pages/details.dart';
 
 class BigGuy extends StatelessWidget {
-  final HomeData focusedItem;
+  final Movie focusedItem;
   final String logo;
   const BigGuy({
     Key? key,
@@ -25,7 +25,8 @@ class BigGuy extends StatelessWidget {
             width: screen.width,
             decoration: BoxDecoration(
                 image: DecorationImage(
-                    image: NetworkImage(focusedItem.cover), fit: BoxFit.cover)),
+                    image: NetworkImage(focusedItem.cover!),
+                    fit: BoxFit.cover)),
           ),
           Container(
             height: screen.height * 0.70,
@@ -39,12 +40,12 @@ class BigGuy extends StatelessWidget {
           if (focusedItem.runtimeType != Null)
             LogoSection(
               logo: logo,
-              id: focusedItem.id,
-              description: focusedItem.description,
+              id: int.parse(focusedItem.id),
+              description: focusedItem.description!,
               maxLines: 2,
-              type: focusedItem.type,
-              popularity: focusedItem.popularity,
-              title: focusedItem.title,
+              type: focusedItem.type!,
+              popularity: focusedItem.rating!,
+              title: focusedItem.title!,
               addOn: InkWell(
                 onTap: () => Navigator.push(
                     context,

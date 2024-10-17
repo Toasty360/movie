@@ -21,6 +21,7 @@ class VidsrcPro implements ServiceProvider {
         "$vidSrcBaseURL/embed/${isMovie ? 'movie/$id' : 'tv/$id/$season/$episode'}",
         options: Options(
           headers: {'Referer': vidSrcBaseURL},
+          validateStatus: (status) => true,
         ),
       ));
 
@@ -46,6 +47,7 @@ class VidsrcPro implements ServiceProvider {
       final sourceResponse = await dio.get(
         '$vidSrcBaseURL/api/e/$sourceHash',
         options: Options(
+          validateStatus: (status) => true,
           headers: {
             'Referer': vidSrcBaseURL,
             'User-Agent':
